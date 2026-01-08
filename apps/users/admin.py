@@ -1,11 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
+from apps.core.admin_mixins import AuditlogHistoryMixin
+
 from .models import Participant, SurveyManager, User
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(AuditlogHistoryMixin, BaseUserAdmin):
     pass
 
 

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     # Third party apps
     "rest_framework",
     "drf_spectacular",
+    "auditlog",
     # Local apps
     "apps.users.apps.UsersConfig",
     "apps.surveys.apps.SurveysConfig",
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "auditlog.middleware.AuditlogMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

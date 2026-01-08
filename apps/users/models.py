@@ -1,7 +1,9 @@
+from auditlog.registry import auditlog
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 
 
+@auditlog.register()
 class User(AbstractUser):
     """Base user model for the system."""
 
@@ -9,6 +11,7 @@ class User(AbstractUser):
         return self.username
 
 
+@auditlog.register()
 class SurveyManager(User):
     """Concrete model for Survey Manager users using MTI."""
 
@@ -17,6 +20,7 @@ class SurveyManager(User):
         verbose_name_plural = _("Survey Managers")
 
 
+@auditlog.register()
 class Participant(User):
     """Concrete model for Participant users using MTI."""
 
