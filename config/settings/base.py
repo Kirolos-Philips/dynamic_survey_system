@@ -117,3 +117,6 @@ STATIC_ROOT = str(BASE_DIR / "staticfiles")
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = str(BASE_DIR / "media")
+
+# Auth settings
+AUTH_USER_MODEL = "users.User"

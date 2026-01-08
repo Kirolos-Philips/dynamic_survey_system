@@ -4,6 +4,14 @@ requires-python = ">=3.10"
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+exclude = [
+    "**/migrations/*.py",
+    ".envs",
+    ".env",
+    "env",
+    "venv",
+    ".venv",
+]
 
 [tool.ruff.lint]
 select = [
