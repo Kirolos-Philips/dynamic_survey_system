@@ -33,11 +33,25 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third party apps
+    "rest_framework",
+    "drf_spectacular",
     # Local apps
     "apps.users.apps.UsersConfig",
     "apps.surveys.apps.SurveysConfig",
     "apps.submissions.apps.SubmissionsConfig",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Dynamic Survey System API",
+    "DESCRIPTION": "API for managing dynamic surveys and submissions",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
