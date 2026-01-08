@@ -3,6 +3,11 @@ from pathlib import Path
 import environ
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.monkeypatches import apply_monkeypatches
+
+# Apply required monkeypatches for compatibility
+apply_monkeypatches()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -29,6 +34,8 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 
 INSTALLED_APPS = [
     "modeltranslation",
+    "jet.dashboard",
+    "jet",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -40,6 +47,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "auditlog",
     # Local apps
+    "apps.core.apps.CoreConfig",
     "apps.users.apps.UsersConfig",
     "apps.surveys.apps.SurveysConfig",
     "apps.submissions.apps.SubmissionsConfig",
@@ -133,6 +141,8 @@ USE_I18N = True
 
 USE_TZ = True
 
+# # Django JET Settings
+JET_CHANGE_FORM_SIBLING_LINKS = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
