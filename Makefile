@@ -1,4 +1,4 @@
-.PHONY: build up down logs migrate makemigrations shell createsuperuser test lint bash help
+.PHONY: build up down logs migrate makemigrations shell createsuperuser seed-surveys test lint bash help
 
 # Default environment
 ENV ?= local
@@ -15,7 +15,7 @@ DJ := $(DOCKER_COMPOSE) exec django
 
 # This magic block allows passing arguments directly to commands
 # It treats everything after the command as a target and silences "nothing to be done"
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),build up down logs migrate makemigrations test shell createsuperuser lint bash))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),build up down logs migrate makemigrations test shell createsuperuser seed-surveys lint bash))
   RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(RUN_ARGS):;@:)
 endif
@@ -39,6 +39,7 @@ help:
 	@echo "  createsuperuser  Create a superuser"
 	@echo "  test [args]      Run tests"
 	@echo "  lint             Run ruff linter"
+	@echo "  seed-surveys     Populate DB with example surveys"
 	@echo "  bash             Open a bash shell in the django container"
 
 build:
@@ -69,7 +70,14 @@ test:
 	$(DJ) /entrypoint python manage.py test $(RUN_ARGS)
 
 lint:
-	$(DJ) ruff check .
+	$(DJ) ruff check . $(RUN_ARGS)
+
+seed-surveys:
+ifneq ($(ENV), local)
+	@printf "\033[0;31mError: seed-surveys can only be run in the local environment.\033[0m\n"
+	@exit 1
+endif
+	$(DJ) /entrypoint python manage.py seed_surveys
 
 bash:
 	$(DJ) /bin/bash $(RUN_ARGS)

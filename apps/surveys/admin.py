@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from modeltranslation.admin import TranslationAdmin, TranslationStackedInline
 
 from apps.core.admin_mixins import AuditlogHistoryMixin
