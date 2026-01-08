@@ -3,7 +3,9 @@ from pathlib import Path
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-environ.Env.read_env(str(BASE_DIR / ".envs" / ".env.local"))
+# Load environment variables from the .envs/.local/ directory
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".django"))
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".postgres"))
 
 from .base import *  # noqa
 from .base import env  # noqa: E402

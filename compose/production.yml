@@ -1,0 +1,34 @@
+version: '3.8'
+
+volumes:
+  production_postgres_data: {}
+  production_postgres_data_backups: {}
+  production_staticfiles: {}
+  production_mediafiles: {}
+
+services:
+  django:
+    build:
+      context: ..
+      dockerfile: ./compose/production/django/Dockerfile
+    container_name: django_production
+    volumes:
+      - production_staticfiles:/app/staticfiles
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.django
+      - ../.envs/.production/.postgres
+    ports:
+      - "8000:8000"
+    command: /start
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_production
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data:Z
+      - production_postgres_data_backups:/backups:z
+    env_file:
+      - ../.envs/.production/.postgres
