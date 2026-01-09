@@ -68,9 +68,13 @@ class Question(models.Model):
     )
     required = models.BooleanField(_("Required"), default=True)
     order = models.PositiveIntegerField(_("Order"), default=0)
-    configuration = models.JSONField(
-        _("Configuration"), default=dict, blank=True
-    )  # Store options for dropdown/radio etc.
+    identifier = models.SlugField(
+        _("Identifier"),
+        max_length=100,
+        help_text=_("Unique string to identify the question in logic strings or API."),
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["order"]
@@ -79,6 +83,23 @@ class Question(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class QuestionChoice(models.Model):
+    question = models.ForeignKey(
+        Question, on_delete=models.CASCADE, related_name="question_choices"
+    )
+    label = models.CharField(_("Label"), max_length=255, default="")
+    value = models.CharField(_("Value"), max_length=255, default="")
+    order = models.PositiveIntegerField(_("Order"), default=0)
+
+    class Meta:
+        ordering = ["order"]
+        verbose_name = _("Question Choice")
+        verbose_name_plural = _("Question Choices")
+
+    def __str__(self):
+        return f"{self.question} - {self.label}"
 
 
 @auditlog.register()
@@ -90,16 +111,16 @@ class QuestionLogic(models.Model):
         LESS_THAN = "lt", _("Less Than")
         CONTAINS = "contains", _("Contains")
 
-    ACTION_CHOICES = [
-        (True, _("Show")),
-        (False, _("Hide")),
-    ]
+    class ActionChoices(models.TextChoices):
+        SHOW = "show", _("Show Question")
+        HIDE = "hide", _("Hide Question")
+        INCLUDE_CHOICES = ("include_choices", _("Include Specific Choices"))
+        EXCLUDE_CHOICES = ("exclude_choices", _("Exclude Specific Choices"))
 
     trigger_question = models.ForeignKey(
         Question,
         related_name="logic_triggers",
         on_delete=models.CASCADE,
-        verbose_name=_("Trigger question"),
     )
     target_question = models.ForeignKey(
         Question,
@@ -107,22 +128,15 @@ class QuestionLogic(models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        verbose_name=_("Target question"),
     )
-    target_section = models.ForeignKey(
-        Section,
-        related_name="logic_targets",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        verbose_name=_("Target section"),
-    )
-    operator = models.CharField(
-        _("Operator"), max_length=10, choices=OperatorChoices.choices
-    )
+
+    operator = models.CharField(max_length=10, choices=OperatorChoices.choices)
     value = models.JSONField(_("Value"))  # Value to compare against
 
-    action = models.BooleanField(_("Action"), choices=ACTION_CHOICES, default=True)
+    action = models.CharField(max_length=20, choices=ActionChoices.choices)
+    target_choices = models.ManyToManyField(
+        QuestionChoice, related_name="question_logics"
+    )
 
     class Meta:
         verbose_name = _("Question Logic")

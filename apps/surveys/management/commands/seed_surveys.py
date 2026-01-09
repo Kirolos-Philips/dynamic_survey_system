@@ -3,14 +3,20 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from apps.surveys.models import Question, QuestionLogic, Section, Survey
+from apps.surveys.models import (
+    Question,
+    QuestionChoice,
+    QuestionLogic,
+    Section,
+    Survey,
+)
 from apps.users.models import SurveyManager
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Seeds the database with example survey data."
+    help = "Seeds the database with a high-detail Relationship and Divorce assessment survey."
 
     def handle(self, *args, **kwargs):
         if not settings.DEBUG:
@@ -18,148 +24,311 @@ class Command(BaseCommand):
                 "This command can only be run in the local environment (DEBUG=True)."
             )
 
-        self.stdout.write("Seeding data...")
+        self.stdout.write("Seeding Rich Relationship Assessment data...")
 
         with transaction.atomic():
+            # Clean up existing data to avoid clashes
+            Survey.objects.filter(title_en__icontains="Relationship").delete()
+
             # 1. Create a Survey Manager
-            manager, created = SurveyManager.objects.get_or_create(
+            manager, _ = SurveyManager.objects.get_or_create(
                 username="survey_admin",
                 defaults={
                     "email": "admin@survey.com",
-                    "first_name": "Survey",
-                    "last_name": "Admin",
                     "is_staff": True,
                 },
             )
-            if created:
-                manager.set_password("admin123")
-                manager.save()
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"Created manager: {manager.username} (pass: admin123)"
-                    )
-                )
 
             # 2. Create the Survey
-            survey, created = Survey.objects.get_or_create(
-                title_en="Customer Feedback Survey",
-                defaults={
-                    "title_ar": "استطلاع رأي العملاء",
-                    "description_en": (
-                        "Help us improve our service by providing your feedback."
-                    ),
-                    "description_ar": "ساعدنا في تحسين خدمتنا من خلال تقديم ملاحظاتك.",
-                    "created_by": manager,
-                    "is_active": True,
-                },
+            survey = Survey.objects.create(
+                title_en="Comprehensive Relationship Diagnostic",
+                title_ar="التشخيص الشامل للعلاقة الزوجية",
+                description_en=(
+                    "This clinical-grade diagnostic is designed to identify "
+                    "communication patterns, conflict roots, and trust levels "
+                    "to better facilitate counseling sessions."
+                ),
+                description_ar=(
+                    "تم تصميم هذا التشخيص بالمستوى العيادي لتحديد أنماط التواصل، "
+                    "جذور الخلاف، ومستويات الثقة لتسهيل جلسات الاستشارة الزوجية بشكل أفضل."
+                ),
+                created_by=manager,
+                is_active=True,
             )
-            if not created:
-                self.stdout.write(
-                    self.style.WARNING("Survey already exists, skipping creation.")
-                )
-                return
-
-            self.stdout.write(self.style.SUCCESS(f"Created survey: {survey.title_en}"))
 
             # 3. Create Sections
-            sec1 = Section.objects.create(
+            # Section 1: Demographics & Context
+            sec_context = Section.objects.create(
                 survey=survey,
-                title_en="General Experience",
-                title_ar="التجربة العامة",
-                description_en="Tell us about your general feeling.",
-                description_ar="أخبرنا عن شعورك العام.",
+                title_en="Relationship Context",
+                title_ar="سياق العلاقة",
+                description_en="Understanding the fundamental structure of your marriage.",
+                description_ar="فهم الهيكل الأساسي لزواجك.",
                 order=1,
             )
 
-            sec2 = Section.objects.create(
+            # Section 2: Communication & Intimacy
+            sec_comm = Section.objects.create(
                 survey=survey,
-                title_en="Product Details",
-                title_ar="تفاصيل المنتج",
-                description_en="Technical questions about the product.",
-                description_ar="أسئلة تقنية حول المنتج.",
+                title_en="Communication & Intimacy",
+                title_ar="التواصل والمودة",
+                description_en="Evaluating how you connect and express affection.",
+                description_ar="تقييم كيفية تواصلكم والتعبير عن المودة.",
                 order=2,
             )
 
-            # 4. Create Questions for Section 1
-            q1 = Question.objects.create(
-                section=sec1,
-                text_en="How satisfied are you with our service?",
-                text_ar="ما مدى رضاك عن خدمتنا؟",
+            # Section 3: Conflict & Triggers
+            sec_conflict = Section.objects.create(
+                survey=survey,
+                title_en="Conflicts & Triggers",
+                title_ar="الخلافات والمحفزات",
+                description_en="Deep dive into recurring arguments and their causes.",
+                description_ar="تعمق في الخلافات المتكررة وأسبابها.",
+                order=3,
+            )
+
+            # 4. Questions for Section 1 (Context)
+            q_status = Question.objects.create(
+                section=sec_context,
+                identifier="rel_status",
+                text_en="What is your current living arrangement?",
+                text_ar="ما هو ترتيب معيشتم الحالية؟",
                 question_type=Question.QuestionType.RADIO,
-                configuration={
-                    "options": [
-                        {
-                            "value": "very_happy",
-                            "label_en": "Very Happy",
-                            "label_ar": "سعيد جداً",
-                        },
-                        {
-                            "value": "neutral",
-                            "label_en": "Neutral",
-                            "label_ar": "محايد",
-                        },
-                        {
-                            "value": "unhappy",
-                            "label_en": "Unhappy",
-                            "label_ar": "غير سعيد",
-                        },
-                    ]
-                },
                 order=1,
             )
+            QuestionChoice.objects.create(
+                question=q_status,
+                value="together",
+                label_en="Living Together",
+                label_ar="نعيش معاً",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_status,
+                value="separate_rooms",
+                label_en="Living Together (Separate Rooms)",
+                label_ar="نعيش معاً (غرف منفصلة)",
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_status,
+                value="separated",
+                label_en="Legally Separated / Not living together",
+                label_ar="منفصلين قانونياً / لا نعيش معاً",
+                order=3,
+            )
 
-            q2 = Question.objects.create(
-                section=sec1,
-                text_en="Why are you unhappy? (Conditional)",
-                text_ar="لماذا أنت غير سعيد؟ (سؤال مشروط)",
-                question_type=Question.QuestionType.TEXT,
+            q_children = Question.objects.create(
+                section=sec_context,
+                identifier="has_children",
+                text_en="Do you have children together?",
+                text_ar="هل لديكم أطفال معاً؟",
+                question_type=Question.QuestionType.RADIO,
+                order=2,
+            )
+            c_children_yes = QuestionChoice.objects.create(
+                question=q_children,
+                value="yes",
+                label_en="Yes",
+                label_ar="نعم",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_children, value="no", label_en="No", label_ar="لا", order=2
+            )
+
+            q_child_count = Question.objects.create(
+                section=sec_context,
+                identifier="child_count",
+                text_en="Number of children",
+                text_ar="عدد الأطفال",
+                question_type=Question.QuestionType.NUMBER,
                 required=False,
+                order=3,
+            )
+
+            # 5. Questions for Section 2 (Communication)
+            q_affection = Question.objects.create(
+                section=sec_comm,
+                identifier="affection_level",
+                text_en="How often do you express physical affection (hugging, holding hands)?",
+                text_ar="كم مرة تعبرون عن المودة الجسدية (عناق، إمساك أيدي)؟",
+                question_type=Question.QuestionType.DROPDOWN,
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_affection,
+                value="daily",
+                label_en="Daily",
+                label_ar="يومياً",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_affection,
+                value="weekly",
+                label_en="Weekly",
+                label_ar="أسبوعياً",
                 order=2,
             )
-
-            # Add Logic: Show Q2 if Q1 is 'unhappy'
-            QuestionLogic.objects.create(
-                trigger_question=q1,
-                target_question=q2,
-                operator=QuestionLogic.OperatorChoices.EQUALS,
-                value="unhappy",
-                action=True,  # Show
+            QuestionChoice.objects.create(
+                question=q_affection,
+                value="monthly",
+                label_en="A few times a month",
+                label_ar="مرات قليلة في الشهر",
+                order=3,
+            )
+            QuestionChoice.objects.create(
+                question=q_affection,
+                value="never",
+                label_en="Never or almost never",
+                label_ar="أبداً أو تقريباً لا يحدث",
+                order=4,
             )
 
-            # 5. Create Questions for Section 2
-            Question.objects.create(
-                section=sec2,
-                text_en="Which features do you use most?",
-                text_ar="ما هي المميزات التي تستخدمها كثيراً؟",
-                question_type=Question.QuestionType.CHECKBOX,
-                configuration={
-                    "options": [
-                        {
-                            "value": "mobile",
-                            "label_en": "Mobile App",
-                            "label_ar": "تطبيق الموبايل",
-                        },
-                        {
-                            "value": "web",
-                            "label_en": "Web Dashboard",
-                            "label_ar": "لوحة التحكم",
-                        },
-                        {
-                            "value": "api",
-                            "label_en": "REST API",
-                            "label_ar": "واجهة البرمجة",
-                        },
-                    ]
-                },
+            q_listening = Question.objects.create(
+                section=sec_comm,
+                identifier="listening_quality",
+                text_en="I feel my partner truly listens when I talk about my feelings.",
+                text_ar="أشعر أن شريكي يستمع لي حقاً عندما أتحدث عن مشاعري.",
+                question_type=Question.QuestionType.RADIO,
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_listening,
+                value="agree",
+                label_en="Strongly Agree",
+                label_ar="أوافق بشدة",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_listening,
+                value="neutral",
+                label_en="Neutral",
+                label_ar="محايد",
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_listening,
+                value="disagree",
+                label_en="Strongly Disagree",
+                label_ar="لا أوافق بشدة",
+                order=3,
+            )
+
+            # 6. Questions for Section 3 (Conflict)
+            q_conflict_root = Question.objects.create(
+                section=sec_conflict,
+                identifier="conflict_root",
+                text_en="Which of these areas causes the MOST tension?",
+                text_ar="أياً من هذه المناطق تسبب أكبر قدر من التوتر؟",
+                question_type=Question.QuestionType.RADIO,
+                order=1,
+            )
+            c_finance = QuestionChoice.objects.create(
+                question=q_conflict_root,
+                value="finance",
+                label_en="Finances & Spending",
+                label_ar="المالية والإنفاق",
+                order=1,
+            )
+            c_inlaws = QuestionChoice.objects.create(
+                question=q_conflict_root,
+                value="inlaws",
+                label_en="Relationship with In-laws",
+                label_ar="العلاقة مع أهل الزوج/الزوجة",
+                order=2,
+            )
+            c_parenting = QuestionChoice.objects.create(
+                question=q_conflict_root,
+                value="parenting",
+                label_en="Parenting Styles",
+                label_ar="أسلوب تربية الأطفال",
+                order=3,
+            )
+            c_housework = QuestionChoice.objects.create(
+                question=q_conflict_root,
+                value="housework",
+                label_en="Division of Housework",
+                label_ar="توزيع المهام المنزلية",
+                order=4,
+            )
+
+            q_violence = Question.objects.create(
+                section=sec_conflict,
+                identifier="has_violence",
+                text_en="Has there been any instance of physical violence in the last year?",
+                text_ar="هل حدثت أي حالة من العنف الجسدي في العام الماضي؟",
+                question_type=Question.QuestionType.RADIO,
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_violence,
+                value="yes",
+                label_en="Yes",
+                label_ar="نعم",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_violence, value="no", label_en="No", label_ar="لا", order=2
+            )
+
+            q_safety_msg = Question.objects.create(
+                section=sec_conflict,
+                identifier="safety_info",
+                text_en="CONFIDENTIAL: Would you like information on local safety resources?",
+                text_ar="سري: هل ترغب في الحصول على معلومات حول موارد السلامة المحلية؟",
+                question_type=Question.QuestionType.RADIO,
+                required=False,
+                order=3,
+            )
+            QuestionChoice.objects.create(
+                question=q_safety_msg,
+                value="yes",
+                label_en="Yes, please",
+                label_ar="نعم، من فضلك",
                 order=1,
             )
 
-            Question.objects.create(
-                section=sec2,
-                text_en="When did you last purchase from us?",
-                text_ar="متى كان آخر شراء لك منا؟",
-                question_type=Question.QuestionType.DATE,
-                order=2,
+            # Logic 1: Show child_count only if has_children == 'yes'
+            QuestionLogic.objects.create(
+                trigger_question=q_children,
+                target_question=q_child_count,
+                operator=QuestionLogic.OperatorChoices.EQUALS,
+                value="yes",
+                action=QuestionLogic.ActionChoices.SHOW,
             )
 
-            self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))
+            # Logic 2: Filter 'Parenting Styles' choice in conflict_root ONLY if they have children
+            l_parent_choice = QuestionLogic.objects.create(
+                trigger_question=q_children,
+                target_question=q_conflict_root,
+                operator=QuestionLogic.OperatorChoices.EQUALS,
+                value="yes",
+                action=QuestionLogic.ActionChoices.INCLUDE_CHOICES,
+            )
+            l_parent_choice.target_choices.add(
+                c_finance, c_inlaws, c_parenting, c_housework
+            )
+
+            # Logic 3: If NO children, exclude 'Parenting Styles' from the conflict roots
+            l_no_parent_choice = QuestionLogic.objects.create(
+                trigger_question=q_children,
+                target_question=q_conflict_root,
+                operator=QuestionLogic.OperatorChoices.EQUALS,
+                value="no",
+                action=QuestionLogic.ActionChoices.INCLUDE_CHOICES,
+            )
+            l_no_parent_choice.target_choices.add(c_finance, c_inlaws, c_housework)
+
+            # Logic 4: Show safety resources question only if violence == 'yes'
+            QuestionLogic.objects.create(
+                trigger_question=q_violence,
+                target_question=q_safety_msg,
+                operator=QuestionLogic.OperatorChoices.EQUALS,
+                value="yes",
+                action=QuestionLogic.ActionChoices.SHOW,
+            )
+
+            self.stdout.write(
+                self.style.SUCCESS("Highly detailed seed data created successfully!")
+            )

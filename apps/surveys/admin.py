@@ -1,9 +1,18 @@
 from django.contrib import admin
-from modeltranslation.admin import TranslationAdmin, TranslationStackedInline
+from modeltranslation.admin import (
+    TranslationAdmin,
+    TranslationStackedInline,
+    TranslationTabularInline,
+)
 
 from apps.core.admin_mixins import AuditlogHistoryMixin
 
-from .models import Question, QuestionLogic, Section, Survey
+from .models import Question, QuestionChoice, QuestionLogic, Section, Survey
+
+
+class QuestionChoiceInline(TranslationTabularInline):
+    model = QuestionChoice
+    extra = 1
 
 
 class SectionInline(TranslationStackedInline):
@@ -37,9 +46,19 @@ class QuestionAdmin(AuditlogHistoryMixin, TranslationAdmin):
     list_display = ("text", "section", "question_type", "required", "order")
     list_filter = ("question_type", "required", "section__survey")
     search_fields = ("text",)
+    inlines = [QuestionChoiceInline]
+
+
+@admin.register(QuestionChoice)
+class QuestionChoiceAdmin(admin.ModelAdmin):
+    list_display = ("id", "label", "value", "question", "order")
+    list_filter = ("question__section__survey",)
+    search_fields = ("label", "value", "question__text")
 
 
 @admin.register(QuestionLogic)
 class QuestionLogicAdmin(AuditlogHistoryMixin, admin.ModelAdmin):
-    list_display = ("trigger_question", "operator", "action")
-    list_filter = ("operator", "action")
+    list_display = ("trigger_question", "target_question", "operator", "action")
+    list_filter = ("operator", "action", "trigger_question__section__survey")
+    filter_horizontal = ("target_choices",)
+    search_fields = ("trigger_question__text", "target_question__text")
