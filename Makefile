@@ -45,11 +45,17 @@ help:
 build:
 	$(DOCKER_COMPOSE) build $(RUN_ARGS)
 
+rebuild:
+	$(DOCKER_COMPOSE) build --no-cache $(RUN_ARGS)
+
 up:
 	$(DOCKER_COMPOSE) up -d $(RUN_ARGS)
 
 down:
 	$(DOCKER_COMPOSE) down $(RUN_ARGS)
+
+restart:
+	$(DOCKER_COMPOSE) restart $(RUN_ARGS)
 
 logs:
 	$(DOCKER_COMPOSE) logs -f $(RUN_ARGS)
