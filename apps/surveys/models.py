@@ -2,6 +2,7 @@ from auditlog.registry import auditlog
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from rest_framework import serializers
 
 
 @auditlog.register()
@@ -55,6 +56,20 @@ class Question(models.Model):
         RADIO = "radio", _("Radio Button")
         CHECKBOX = "checkbox", _("Checkbox")
         DATE = "date", _("Date")
+
+        def validate_answer_type(self, value):
+            validators = {
+                self.TEXT: serializers.CharField().to_internal_value,
+                self.NUMBER: serializers.IntegerField().to_internal_value,
+                self.DROPDOWN: serializers.CharField().to_internal_value,
+                self.RADIO: serializers.CharField().to_internal_value,
+                self.CHECKBOX: serializers.ListSerializer(
+                    child=serializers.CharField()
+                ).to_internal_value,
+                self.DATE: serializers.DateField().to_internal_value,
+            }
+
+            return validators[self](value)
 
     section = models.ForeignKey(
         Section,
@@ -114,6 +129,7 @@ class QuestionLogic(models.Model):
     class ActionChoices(models.TextChoices):
         SHOW = "show", _("Show Question")
         HIDE = "hide", _("Hide Question")
+        LIMIT_CHOICES = ("limit_choices", _("Limit Choices"))
         INCLUDE_CHOICES = ("include_choices", _("Include Specific Choices"))
         EXCLUDE_CHOICES = ("exclude_choices", _("Exclude Specific Choices"))
 
