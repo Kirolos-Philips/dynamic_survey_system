@@ -1,12 +1,14 @@
+import sys
 from pathlib import Path
 
 import environ
 
 # Debugpy for remote debugging (optional)
 try:
-    import debugpy
+    if "runserver" in sys.argv:
+        import debugpy
 
-    debugpy.listen(("0.0.0.0", 5679))
+        debugpy.listen(("0.0.0.0", 5679))
 except RuntimeError:
     pass
 
