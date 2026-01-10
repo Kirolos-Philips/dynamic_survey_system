@@ -1,2 +1,5 @@
 -r base.txt
 ruff==0.14.10
+debugpy==1.8.19
+ipdb==0.13.13
+ipython==9.9.0

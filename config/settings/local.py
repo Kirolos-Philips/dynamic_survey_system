@@ -2,6 +2,14 @@ from pathlib import Path
 
 import environ
 
+# Debugpy for remote debugging (optional)
+try:
+    import debugpy
+
+    debugpy.listen(("0.0.0.0", 5679))
+except RuntimeError:
+    pass
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Load environment variables from the .envs/.local/ directory
 environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".django"))
