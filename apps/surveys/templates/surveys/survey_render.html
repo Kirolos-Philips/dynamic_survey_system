@@ -1,0 +1,67 @@
+{% load static i18n %}
+<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Survey</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    {% if LANGUAGE_CODE == 'ar' %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    {% endif %}
+    <link rel="stylesheet" href="{% static 'surveys/css/survey_render.css' %}">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="sidebar-wrapper">
+            <aside class="sidebar" id="survey-sidebar">
+                <h3 class="sidebar-title">{% trans "Sections" %}</h3>
+                <div id="steps-list">
+                    <!-- Steps will be injected here -->
+                </div>
+
+                <div class="lang-switcher">
+                    <form action="{% url 'set_language' %}" method="post" id="lang-form">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                        <select name="language" onchange="this.form.submit()">
+                            {% get_available_languages as LANGUAGES %}
+                            {% get_language_info_list for LANGUAGES as languages %}
+                            {% for language in languages %}
+                            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                                {{ language.name_local }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </aside>
+        </div>
+
+        <main class="main-content">
+            <div class="survey-card" id="survey-container">
+                <div style="text-align: center; padding: 3rem;">
+                    <p>{% trans "Loading Survey..." %}</p>
+                </div>
+            </div>
+        </main>
+
+        <div class="balance-spacer"></div>
+    </div>
+
+    <script src="{% static 'surveys/js/survey_logic.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const renderer = new SurveyRenderer('survey-container', '{{ survey_id }}', '{{ LANGUAGE_CODE }}');
+            renderer.init();
+        });
+    </script>
+</body>
+
+</html>
