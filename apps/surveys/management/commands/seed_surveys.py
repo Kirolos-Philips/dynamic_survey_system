@@ -16,7 +16,10 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Seeds the database with a high-detail Relationship and Divorce assessment survey."
+    help = (
+        "Seeds the database with a high-detail Relationship and "
+        "Divorce assessment survey."
+    )
 
     def handle(self, *args, **kwargs):
         if not settings.DEBUG:
@@ -50,7 +53,8 @@ class Command(BaseCommand):
                 ),
                 description_ar=(
                     "تم تصميم هذا التشخيص بالمستوى العيادي لتحديد أنماط التواصل، "
-                    "جذور الخلاف، ومستويات الثقة لتسهيل جلسات الاستشارة الزوجية بشكل أفضل."
+                    "جذور الخلاف، ومستويات الثقة لتسهيل جلسات الاستشارة الزوجية "
+                    "بشكل أفضل."
                 ),
                 created_by=manager,
                 is_active=True,
@@ -62,7 +66,6 @@ class Command(BaseCommand):
                 survey=survey,
                 title_en="Relationship Context",
                 title_ar="سياق العلاقة",
-                description_en="Understanding the fundamental structure of your marriage.",
                 description_ar="فهم الهيكل الأساسي لزواجك.",
                 order=1,
             )
@@ -126,7 +129,7 @@ class Command(BaseCommand):
                 question_type=Question.QuestionType.RADIO,
                 order=2,
             )
-            c_children_yes = QuestionChoice.objects.create(
+            QuestionChoice.objects.create(
                 question=q_children,
                 value="yes",
                 label_en="Yes",
@@ -151,7 +154,10 @@ class Command(BaseCommand):
             q_affection = Question.objects.create(
                 section=sec_comm,
                 identifier="affection_level",
-                text_en="How often do you express physical affection (hugging, holding hands)?",
+                text_en=(
+                    "How often do you express physical affection "
+                    "(hugging, holding hands)?"
+                ),
                 text_ar="كم مرة تعبرون عن المودة الجسدية (عناق، إمساك أيدي)؟",
                 question_type=Question.QuestionType.DROPDOWN,
                 order=1,
@@ -188,7 +194,9 @@ class Command(BaseCommand):
             q_listening = Question.objects.create(
                 section=sec_comm,
                 identifier="listening_quality",
-                text_en="I feel my partner truly listens when I talk about my feelings.",
+                text_en=(
+                    "I feel my partner truly listens when I talk about my feelings."
+                ),
                 text_ar="أشعر أن شريكي يستمع لي حقاً عندما أتحدث عن مشاعري.",
                 question_type=Question.QuestionType.RADIO,
                 order=2,
@@ -212,6 +220,97 @@ class Command(BaseCommand):
                 value="disagree",
                 label_en="Strongly Disagree",
                 label_ar="لا أوافق بشدة",
+                order=3,
+            )
+
+            q_shared_goals = Question.objects.create(
+                section=sec_comm,
+                identifier="shared_goals",
+                text_en="Do you feel you and your partner share the same life goals?",
+                text_ar="هل تشعر أنك وشريكك تشتركان في نفس أهداف الحياة؟",
+                question_type=Question.QuestionType.RADIO,
+                order=3,
+            )
+            QuestionChoice.objects.create(
+                question=q_shared_goals,
+                value="yes",
+                label_en="Yes, definitely",
+                label_ar="نعم، بالتأكيد",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_shared_goals,
+                value="mostly",
+                label_en="Mostly",
+                label_ar="غالباً",
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_shared_goals,
+                value="no",
+                label_en="No, we have different visions",
+                label_ar="لا، لدينا رؤى مختلفة",
+                order=3,
+            )
+
+            q_trust_level = Question.objects.create(
+                section=sec_comm,
+                identifier="trust_level",
+                text_en="How would you rate your trust in your partner?",
+                text_ar="كيف تقيم مستوى ثقتك في شريكك؟",
+                question_type=Question.QuestionType.RADIO,
+                order=4,
+            )
+            QuestionChoice.objects.create(
+                question=q_trust_level,
+                value="high",
+                label_en="High Trust",
+                label_ar="ثقة عالية",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_trust_level,
+                value="medium",
+                label_en="Medium Trust",
+                label_ar="ثقة متوسطة",
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_trust_level,
+                value="low",
+                label_en="Low Trust",
+                label_ar="ثقة منخفضة",
+                order=3,
+            )
+
+            q_trust_reason = Question.objects.create(
+                section=sec_comm,
+                identifier="trust_reason",
+                text_en="What is the primary reason for low trust?",
+                text_ar="ما هو السبب الرئيسي لانخفاض الثقة؟",
+                question_type=Question.QuestionType.DROPDOWN,
+                required=False,
+                order=5,
+            )
+            QuestionChoice.objects.create(
+                question=q_trust_reason,
+                value="infidelity",
+                label_en="Past Infidelity",
+                label_ar="خيانة سابقة",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_trust_reason,
+                value="dishonesty",
+                label_en="Frequent Dishonesty",
+                label_ar="عدم الأمانة المتكرر",
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_trust_reason,
+                value="secrecy",
+                label_en="Financial Secrecy",
+                label_ar="سرية مالية",
                 order=3,
             )
 
@@ -256,7 +355,9 @@ class Command(BaseCommand):
             q_violence = Question.objects.create(
                 section=sec_conflict,
                 identifier="has_violence",
-                text_en="Has there been any instance of physical violence in the last year?",
+                text_en=(
+                    "Has there been any instance of physical violence in the last year?"
+                ),
                 text_ar="هل حدثت أي حالة من العنف الجسدي في العام الماضي؟",
                 question_type=Question.QuestionType.RADIO,
                 order=2,
@@ -272,14 +373,56 @@ class Command(BaseCommand):
                 question=q_violence, value="no", label_en="No", label_ar="لا", order=2
             )
 
+            q_resolution = Question.objects.create(
+                section=sec_conflict,
+                identifier="resolution_method",
+                text_en="How do you usually resolve conflicts?",
+                text_ar="كيف تحلون النزاعات عادة؟",
+                question_type=Question.QuestionType.DROPDOWN,
+                order=3,
+            )
+            QuestionChoice.objects.create(
+                question=q_resolution,
+                value="talk",
+                label_en="Calm discussion",
+                label_ar="نقاش هادئ",
+                order=1,
+            )
+            QuestionChoice.objects.create(
+                question=q_resolution,
+                value="shout",
+                label_en="Shouting/Arguing",
+                label_ar="صراخ/جدال",
+                order=2,
+            )
+            QuestionChoice.objects.create(
+                question=q_resolution,
+                value="avoid",
+                label_en="Avoidance/Silence",
+                label_ar="تجنب/صمت",
+                order=3,
+            )
+            QuestionChoice.objects.create(
+                question=q_resolution,
+                value="third_party",
+                label_en="Mediator/Third Party",
+                label_ar="وسيط/طرف ثالث",
+                order=4,
+            )
+
             q_safety_msg = Question.objects.create(
                 section=sec_conflict,
                 identifier="safety_info",
-                text_en="CONFIDENTIAL: Would you like information on local safety resources?",
-                text_ar="سري: هل ترغب في الحصول على معلومات حول موارد السلامة المحلية؟",
+                text_en=(
+                    "CONFIDENTIAL: Would you like information on local "
+                    "safety resources?"
+                ),
+                text_ar=(
+                    "سري: هل ترغب في الحصول على معلومات حول موارد السلامة المحلية؟"
+                ),
                 question_type=Question.QuestionType.RADIO,
                 required=False,
-                order=3,
+                order=4,
             )
             QuestionChoice.objects.create(
                 question=q_safety_msg,
@@ -328,6 +471,32 @@ class Command(BaseCommand):
                 value="yes",
                 action=QuestionLogic.ActionChoices.SHOW,
             )
+
+            # Logic 5: Show trust_reason only if trust_level == 'low'
+            QuestionLogic.objects.create(
+                trigger_question=q_trust_level,
+                target_question=q_trust_reason,
+                operator=QuestionLogic.OperatorChoices.EQUALS,
+                value="low",
+                action=QuestionLogic.ActionChoices.SHOW,
+            )
+
+            # Logic 6: Filter resolution methods for 'separated' couples
+            l_sep_resolution = QuestionLogic.objects.create(
+                trigger_question=q_status,
+                target_question=q_resolution,
+                operator=QuestionLogic.OperatorChoices.EQUALS,
+                value="separated",
+                action=QuestionLogic.ActionChoices.INCLUDE_CHOICES,
+            )
+            # Only allow Calm discussion and Third party
+            talk_choice = QuestionChoice.objects.get(
+                question=q_resolution, value="talk"
+            )
+            tp_choice = QuestionChoice.objects.get(
+                question=q_resolution, value="third_party"
+            )
+            l_sep_resolution.target_choices.add(talk_choice, tp_choice)
 
             self.stdout.write(
                 self.style.SUCCESS("Highly detailed seed data created successfully!")
