@@ -47,7 +47,8 @@ class SurveyRenderSerializer(serializers.ModelSerializer):
             .prefetch_related("question_choices")
             .order_by("section", "order")
         )
-        return QuestionRenderSerializer(questions, many=True).data
+        data = QuestionRenderSerializer(questions, many=True).data
+        return {str(q["id"]): q for q in data}
 
     def get_logic_map(self, obj):
         logics = (

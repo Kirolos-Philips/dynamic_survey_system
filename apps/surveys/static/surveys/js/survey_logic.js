@@ -30,7 +30,7 @@ class SurveyRenderer {
     prepareSections() {
         const { questions_map } = this.surveyData;
         const sectionMap = {};
-        questions_map.forEach(q => {
+        Object.values(questions_map).forEach(q => {
             if (!sectionMap[q.section]) {
                 sectionMap[q.section] = [];
             }
@@ -214,7 +214,7 @@ class SurveyRenderer {
         if (!rules) return;
 
         const wrapper = document.getElementById(`q-wrapper-${targetId}`);
-        const question = this.surveyData.questions_map.find(q => q.id == targetId);
+        const question = this.surveyData.questions_map[targetId];
 
         let shouldShow = true;
         let availableChoices = null;
