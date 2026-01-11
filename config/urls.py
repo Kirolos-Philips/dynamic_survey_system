@@ -15,16 +15,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 from django.urls import path
+from django.urls.conf import include
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
 
+app_name = "config"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("i18n/", include("django.conf.urls.i18n")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/schema/swagger-ui/",
@@ -36,4 +41,12 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
+    # API apps (no language prefix usually for APIs)
+    path("api/surveys/", include("apps.surveys.urls", namespace="surveys")),
+    path("api/submissions/", include("apps.submissions.urls", namespace="submissions")),
 ]
+
+urlpatterns += i18n_patterns(
+    # Frontend apps with language prefix
+    path("surveys/", include("apps.surveys.urls", namespace="frontend_surveys")),
+)

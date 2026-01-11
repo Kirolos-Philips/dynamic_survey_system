@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -5,10 +6,11 @@ import environ
 
 # Debugpy for remote debugging (optional)
 try:
-    if "runserver" in sys.argv:
+    if "runserver" in sys.argv and os.environ.get("RUN_MAIN") == "true":
         import debugpy
 
         debugpy.listen(("0.0.0.0", 5679))
+        print("✅ Debugger is listening on port 5679...")
 except RuntimeError:
     pass
 
