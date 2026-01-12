@@ -1,11 +1,9 @@
 from rest_framework import mixins, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from apps.submissions.serializers import AnswerSerializer
 from apps.submissions.services import SubmissionValidatorService
-from apps.surveys.serializers import SurveyRenderSerializer
+from apps.surveys.models import Survey
 
 from .models import Submission
 from .serializers import SubmissionSerializer
@@ -20,44 +18,46 @@ class SubmissionViewSet(
     queryset = Submission.objects.all().prefetch_related("answers")
     serializer_class = SubmissionSerializer
 
-    def _process_answers(self, answers_list: list[dict], submission: Submission):
-        serializer: AnswerSerializer = self.get_serializer(data=answers_list, many=True)
-        serializer.is_valid(raise_exception=True)
-
-        survey_data = SurveyRenderSerializer(submission.survey).data
-        answers_map = {
-            str(answer["question"].id): answer["value"]
-            for answer in serializer.validated_data
-        }
-
-        SubmissionValidatorService(
-            survey_data=survey_data, answers_map=answers_map, is_completed=False
-        ).validate()
-        serializer.save()
-
-        submission.refresh_from_db()
-
-        updated_submission = self.get_queryset().get(id=submission.id)
-        return Response(
-            SubmissionSerializer(updated_submission).data,
-            status=status.HTTP_200_OK,
-            headers=self.get_success_headers(serializer.data),
+    def _process_answers(self, submission_serializer: SubmissionSerializer):
+        submission = submission_serializer.instance
+        status = submission_serializer.validated_data.get(
+            "status", Submission.Status.IN_PROGRESS
         )
+
+        # Get all existing answers to be cumulative in validation
+        new_answers = submission_serializer.validated_data.get("answers", [])
+        if new_answers:
+            old_answers = submission.answers.all()
+            merged_answers = {str(a.question_id): a.value for a in old_answers}
+            for a in new_answers:
+                merged_answers[str(a["question"].id)] = a["value"]
+
+            # Validate answers
+            SubmissionValidatorService(
+                survey_data=Survey.get_cached_schema(submission.survey_id),
+                answers_map=merged_answers,
+                is_completed=status == Submission.Status.COMPLETED,
+            ).validate()
+
+        # SAVE THE ANSWERS TO THE DB
+        submission_serializer.save()
+
+        return submission_serializer.data
 
     def create(self, request, *args, **kwargs):
-        serializer: SubmissionSerializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # IMPORTANT NOTE: THIS INITIAL SAVE DOESN'T COMMIT THE ANSWERS TO THE DB
         serializer.save()
-
-        return self._process_answers(
-            answers_list=serializer.validated_data.pop("answers", []) or [],
-            submission=serializer.instance,
-        )
+        response_data = self._process_answers(submission_serializer=serializer)
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        serializer: SubmissionSerializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return self._process_answers(
-            answers_list=serializer.validated_data.get("answers", []) or [],
-            submission=serializer.instance,
+        submission = self.get_object()
+        serializer = self.get_serializer(
+            instance=submission, data=request.data, partial=True
         )
+        serializer.is_valid(raise_exception=True)
+        # IMPORTANT NOTE: YOU SHOULD NOT SAVE THE SERIALIZER HERE
+        response_data = self._process_answers(submission_serializer=serializer)
+        return Response(response_data, status=status.HTTP_200_OK)

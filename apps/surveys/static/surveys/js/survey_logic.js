@@ -7,24 +7,113 @@ class SurveyRenderer {
         this.formValues = {};
         this.currentStep = 0;
         this.sections = [];
+        this.submissionId = null;
+        this.isSaving = false;
+    }
+
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     async init() {
         try {
             const response = await fetch(`/api/surveys/${this.surveyId}/data/`, {
-                headers: {
-                    'Accept-Language': this.language
-                }
+                headers: { 'Accept-Language': this.language }
             });
             this.surveyData = await response.json();
             this.prepareSections();
             this.render();
             this.applyInitialLogic();
             this.updateStepVisibility();
+
+            // Initialize submission
+            await this.ensureSubmission();
         } catch (error) {
             console.error('Error loading survey:', error);
             this.container.innerHTML = '<div class="error-msg">Failed to load survey.</div>';
         }
+    }
+
+    async ensureSubmission() {
+        if (this.submissionId) return;
+        try {
+            const response = await fetch('/api/submissions/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({ survey: this.surveyId })
+            });
+            const data = await response.json();
+            this.submissionId = data.id;
+        } catch (error) {
+            console.error('Error creating submission:', error);
+        }
+    }
+
+    async saveProgress(isCompleted = false) {
+        if (!this.submissionId || this.isSaving) return;
+
+        this.isSaving = true;
+        const currentSection = this.sections[this.currentStep];
+        const answers = currentSection.questions.map(q => ({
+            question: q.id,
+            value: this.formValues[q.id]
+        })).filter(a => a.value !== undefined && a.value !== null && a.value !== '');
+
+        try {
+            const url = this.submissionId ? `/api/submissions/${this.submissionId}/` : '/api/submissions/';
+            const method = this.submissionId ? 'PATCH' : 'POST';
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    survey: this.surveyId,
+                    answers: answers,
+                    is_completed: isCompleted
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(Object.values(errorData).flat().join(', '));
+            }
+
+            if (isCompleted) {
+                this.renderSuccess();
+            }
+        } catch (error) {
+            console.error('Error saving answers:', error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            this.isSaving = false;
+        }
+    }
+
+    renderSuccess() {
+        this.container.innerHTML = `
+            <div class="survey-card" style="text-align: center; padding: 4rem 2rem;">
+                <div style="font-size: 4rem; margin-bottom: 1.5rem;">🎉</div>
+                <h2 style="color: var(--accent-color); margin-bottom: 1rem;">Submission Successful!</h2>
+                <p style="color: var(--text-dim);">Thank you for taking the time to complete this survey.</p>
+                <button onclick="location.reload()" class="nav-btn next" style="max-width: 200px; margin: 2rem auto 0;">Back to Start</button>
+            </div>
+        `;
     }
 
     prepareSections() {
@@ -138,14 +227,37 @@ class SurveyRenderer {
             }
         });
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log('Form Submitted:', this.formValues);
-            alert('Survey submitted! Check console for data.');
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Submitting...';
+            try {
+                await this.saveProgress(true);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+            }
         });
 
-        document.getElementById('next-btn').addEventListener('click', () => this.nextStep());
-        document.getElementById('prev-btn').addEventListener('click', () => this.prevStep());
+        document.getElementById('next-btn').addEventListener('click', async () => {
+            const nextBtn = document.getElementById('next-btn');
+            const originalText = nextBtn.innerText;
+            nextBtn.disabled = true;
+            nextBtn.innerText = 'Saving...';
+            try {
+                await this.saveProgress();
+                this.nextStep();
+            } finally {
+                nextBtn.disabled = false;
+                nextBtn.innerText = originalText;
+            }
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            this.prevStep();
+        });
 
         const stepsList = document.getElementById('steps-list');
         if (stepsList) {
@@ -186,19 +298,18 @@ class SurveyRenderer {
             step.style.display = index === this.currentStep ? 'block' : 'none';
         });
 
-
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
         const submitBtn = document.getElementById('submit-btn');
 
-        prevBtn.style.display = this.currentStep === 0 ? 'none' : 'block';
+        if (prevBtn) prevBtn.style.display = this.currentStep === 0 ? 'none' : 'block';
 
         if (this.currentStep === this.sections.length - 1) {
-            nextBtn.style.display = 'none';
-            submitBtn.style.display = 'block';
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'block';
         } else {
-            nextBtn.style.display = 'block';
-            submitBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'block';
+            if (submitBtn) submitBtn.style.display = 'none';
         }
 
         this.updateProgress();
@@ -237,12 +348,9 @@ class SurveyRenderer {
         const wrapper = document.getElementById(`q-wrapper-${targetIdStr}`);
         if (!question || !wrapper) return;
 
-        // Visibility State
         const hasShowRules = rules.some(r => r.action === 'show');
         let showMatched = false;
         let hideMatched = false;
-
-        // Choice Filtering State
         let allowedChoiceIds = null;
 
         rules.forEach(rule => {
@@ -272,16 +380,13 @@ class SurveyRenderer {
             }
         });
 
-        // Determine Visibility
         const shouldShow = hasShowRules ? (showMatched && !hideMatched) : !hideMatched;
         wrapper.style.display = shouldShow ? 'block' : 'none';
         wrapper.classList.toggle('hidden', !shouldShow);
 
-        // Determine Final Choices Array
         if (question.type === 'radio' || question.type === 'dropdown') {
             if (allowedChoiceIds !== null) {
                 const choiceList = Array.from(allowedChoiceIds);
-                console.log(`[Logic] Question ${targetIdStr}: Filtering to choices`, choiceList);
                 this.filterChoices(targetIdStr, choiceList);
             } else {
                 this.resetChoices(targetIdStr);
@@ -292,7 +397,6 @@ class SurveyRenderer {
 
     checkCondition(val1, operator, val2) {
         if (val1 === undefined || val1 === null) return false;
-
         const v1 = String(val1).toLowerCase().trim();
         const v2 = String(val2).toLowerCase().trim();
 
@@ -310,7 +414,6 @@ class SurveyRenderer {
         const wrapper = document.getElementById(`q-wrapper-${qId}`);
         const allowed = allowedChoiceIds.map(id => Number(id));
 
-        // Filter Radio Buttons
         const radioLabels = wrapper.querySelectorAll('.radio-label');
         radioLabels.forEach(label => {
             const choiceId = Number(label.dataset.choiceId);
@@ -325,7 +428,6 @@ class SurveyRenderer {
             }
         });
 
-        // Filter Dropdown Options
         const select = wrapper.querySelector('select');
         if (select) {
             Array.from(select.options).forEach(option => {
@@ -395,7 +497,6 @@ class SurveyRenderer {
             if (sidebarItem) {
                 sidebarItem.classList.toggle('active', index === this.currentStep);
 
-                // Logic for "completed": Check if all VISIBLE questions have values
                 const isCompleted = section.questions.every(q => {
                     const wrapper = document.getElementById(`q-wrapper-${q.id}`);
                     const isHidden = wrapper && (wrapper.style.display === 'none' || wrapper.classList.contains('hidden'));

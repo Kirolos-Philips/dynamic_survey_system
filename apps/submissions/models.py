@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from apps.surveys.models import Question, Survey
@@ -41,6 +42,12 @@ class Submission(models.Model):
 
     def __str__(self):
         return f"Submission for {self.survey.title} by {self.user or 'Anonymous'}"
+
+    def save(self, *args, **kwargs):
+        if self.status == self.Status.COMPLETED:
+            self.progress = 100
+            self.completed_at = now()
+        super().save(*args, **kwargs)
 
 
 class Answer(models.Model):

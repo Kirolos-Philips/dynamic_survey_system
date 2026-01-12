@@ -21,7 +21,7 @@ class SubmissionValidatorService:
         # 1. Validate provided answers
         for q_id, answer_value in self.answers_map.items():
             if q_id not in self.survey_data["questions_map"]:
-                raise ValidationError(f"Invalid question ID: {q_id}")
+                raise ValidationError({"q_id": f"Invalid question ID: {q_id}"})
 
             question_data = self.survey_data["questions_map"][q_id]
 
