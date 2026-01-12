@@ -204,6 +204,22 @@ class SurveyRenderer {
             inputHtml = `
                 <input type="number" name="${name}" data-question-id="${q.id}" class="survey-input" placeholder="Enter a number">
             `;
+        } else if (q.type === 'date') {
+            inputHtml = `
+                <input type="date" name="${name}" data-question-id="${q.id}" class="survey-input">
+            `;
+        } else if (q.type === 'checkbox') {
+            inputHtml = q.choices.map(choice => `
+                <label class="radio-label" data-choice-id="${choice.id}">
+                    <input type="checkbox" name="${name}" value="${choice.value}" data-question-id="${q.id}" data-choice-id="${choice.id}">
+                    <span class="checkbox-custom"></span>
+                    <span class="choice-text">${choice.label}</span>
+                </label>
+            `).join('');
+        } else {
+            inputHtml = `
+                <input type="text" name="${name}" data-question-id="${q.id}" class="survey-input" placeholder="Your answer">
+            `;
         }
 
         return `
@@ -222,7 +238,12 @@ class SurveyRenderer {
             const target = e.target;
             const qId = target.dataset.questionId;
             if (qId) {
-                this.updateValue(qId, target.value);
+                let value = target.value;
+                if (target.type === 'checkbox') {
+                    const checked = form.querySelectorAll(`input[name="${target.name}"]:checked`);
+                    value = Array.from(checked).map(cb => cb.value);
+                }
+                this.updateValue(qId, value);
                 this.handleTriggers(qId);
             }
         });
@@ -384,7 +405,7 @@ class SurveyRenderer {
         wrapper.style.display = shouldShow ? 'block' : 'none';
         wrapper.classList.toggle('hidden', !shouldShow);
 
-        if (question.type === 'radio' || question.type === 'dropdown') {
+        if (['radio', 'dropdown', 'checkbox'].includes(question.type)) {
             if (allowedChoiceIds !== null) {
                 const choiceList = Array.from(allowedChoiceIds);
                 this.filterChoices(targetIdStr, choiceList);

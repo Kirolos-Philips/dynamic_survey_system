@@ -81,9 +81,15 @@ class SubmissionValidatorService:
             if operator == QuestionLogic.OperatorChoices.NOT_EQUALS:
                 return v1 != v2
             if operator == QuestionLogic.OperatorChoices.GREATER_THAN:
-                return float(v1) > float(v2)
+                try:
+                    return float(v1) > float(v2)
+                except (ValueError, TypeError):
+                    return v1 > v2
             if operator == QuestionLogic.OperatorChoices.LESS_THAN:
-                return float(v1) < float(v2)
+                try:
+                    return float(v1) < float(v2)
+                except (ValueError, TypeError):
+                    return v1 < v2
             if operator == QuestionLogic.OperatorChoices.CONTAINS:
                 return v2 in v1
         except (ValueError, TypeError):
@@ -96,14 +102,25 @@ class SubmissionValidatorService:
         if not rules or question_data["type"] not in ["radio", "dropdown", "checkbox"]:
             return
 
-        # Start with all default values as allowed
         choice_map = {c["id"]: str(c["value"]) for c in question_data["choices"]}
-        # Start with all default values as allowed
+        allowed_values, rule_applied = self._filter_choices_by_rules(choice_map, rules)
+
+        if rule_applied:
+            submitted_values = (
+                answer_value if isinstance(answer_value, list) else [answer_value]
+            )
+            for val in submitted_values:
+                if str(val) not in allowed_values:
+                    raise ValidationError(
+                        f"Invalid choice '{val}' for question {q_id}."
+                    )
+
+    def _filter_choices_by_rules(self, choice_map: dict, rules: list) -> tuple:
+        """Helper to process cumulative choice filtering logic."""
         allowed_values = set(choice_map.values())
         rule_applied = False
         has_limit_match = False
 
-        # Process rules in order for cumulative logic (Limit -> Include -> Exclude)
         for rule in rules:
             trigger_val = self.answers_map.get(str(rule["trigger_question"]))
             if not self.evaluate_condition(
@@ -116,25 +133,19 @@ class SubmissionValidatorService:
             target_values = {choice_map[cid] for cid in target_ids if cid in choice_map}
 
             if action == "limit_choices":
-                # If first limit match, clear defaults. Multiple limits add to the pool.
                 if not has_limit_match:
                     allowed_values.clear()
                     has_limit_match = True
                 allowed_values.update(target_values)
                 rule_applied = True
-            elif action == "include_choices":
-                # Append to current allowed set
-                allowed_values.update(target_values)
-                rule_applied = True
-            elif action == "exclude_choices":
-                # Remove from current allowed set
-                allowed_values -= target_values
+            elif action in ["include_choices", "exclude_choices"]:
+                if action == "include_choices":
+                    allowed_values.update(target_values)
+                else:
+                    allowed_values -= target_values
                 rule_applied = True
 
-        if rule_applied and str(answer_value) not in allowed_values:
-            raise ValidationError(
-                f"Invalid choice '{answer_value}' for question {q_id}."
-            )
+        return allowed_values, rule_applied
 
     def check_required_questions(self):
         for q_id in self.survey_data["questions_map"]:
