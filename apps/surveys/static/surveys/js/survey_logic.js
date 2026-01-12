@@ -146,6 +146,24 @@ class SurveyRenderer {
 
         document.getElementById('next-btn').addEventListener('click', () => this.nextStep());
         document.getElementById('prev-btn').addEventListener('click', () => this.prevStep());
+
+        const stepsList = document.getElementById('steps-list');
+        if (stepsList) {
+            stepsList.addEventListener('click', (e) => {
+                const stepItem = e.target.closest('.step-item');
+                if (stepItem) {
+                    const stepIndex = parseInt(stepItem.dataset.step);
+                    this.goToStep(stepIndex);
+                }
+            });
+        }
+    }
+
+    goToStep(index) {
+        if (index >= 0 && index < this.sections.length) {
+            this.currentStep = index;
+            this.updateStepVisibility();
+        }
     }
 
     nextStep() {
@@ -198,6 +216,7 @@ class SurveyRenderer {
 
     updateValue(qId, value) {
         this.formValues[qId] = value;
+        this.updateSidebarState();
     }
 
     handleTriggers(triggerId) {
@@ -210,76 +229,117 @@ class SurveyRenderer {
     }
 
     evaluateLogic(targetId) {
-        const rules = this.surveyData.logic_map[targetId];
+        const targetIdStr = String(targetId);
+        const rules = this.surveyData.logic_map[targetIdStr];
         if (!rules) return;
 
-        const wrapper = document.getElementById(`q-wrapper-${targetId}`);
-        const question = this.surveyData.questions_map[targetId];
+        const question = this.surveyData.questions_map[targetIdStr];
+        const wrapper = document.getElementById(`q-wrapper-${targetIdStr}`);
+        if (!question || !wrapper) return;
 
-        let shouldShow = true;
-        let availableChoices = null;
+        // Visibility State
+        const hasShowRules = rules.some(r => r.action === 'show');
+        let showMatched = false;
+        let hideMatched = false;
+
+        // Choice Filtering State
+        let allowedChoiceIds = null;
 
         rules.forEach(rule => {
-            const triggerValue = this.formValues[rule.trigger_question];
+            const triggerValue = this.formValues[String(rule.trigger_question)];
             const isMatch = this.checkCondition(triggerValue, rule.operator, rule.value);
 
-            if (rule.action === 'show') {
-                shouldShow = isMatch;
-            } else if (rule.action === 'include_choices' && isMatch) {
-                availableChoices = rule.target_choices;
+            if (isMatch) {
+                switch (rule.action) {
+                    case 'show':
+                        showMatched = true;
+                        break;
+                    case 'hide':
+                        hideMatched = true;
+                        break;
+                    case 'limit_choices':
+                    case 'include_choices':
+                        if (allowedChoiceIds === null) allowedChoiceIds = new Set();
+                        (rule.target_choices || []).forEach(id => allowedChoiceIds.add(Number(id)));
+                        break;
+                    case 'exclude_choices':
+                        if (allowedChoiceIds === null) {
+                            allowedChoiceIds = new Set(question.choices.map(c => Number(c.id)));
+                        }
+                        (rule.target_choices || []).forEach(id => allowedChoiceIds.delete(Number(id)));
+                        break;
+                }
             }
         });
 
-        if (shouldShow) {
-            wrapper.classList.remove('hidden');
-        } else {
-            wrapper.classList.add('hidden');
-        }
+        // Determine Visibility
+        const shouldShow = hasShowRules ? (showMatched && !hideMatched) : !hideMatched;
+        wrapper.style.display = shouldShow ? 'block' : 'none';
+        wrapper.classList.toggle('hidden', !shouldShow);
 
-        if (availableChoices && (question.type === 'radio' || question.type === 'dropdown')) {
-            this.filterChoices(targetId, availableChoices);
-        } else {
-            this.resetChoices(targetId);
+        // Determine Final Choices Array
+        if (question.type === 'radio' || question.type === 'dropdown') {
+            if (allowedChoiceIds !== null) {
+                const choiceList = Array.from(allowedChoiceIds);
+                console.log(`[Logic] Question ${targetIdStr}: Filtering to choices`, choiceList);
+                this.filterChoices(targetIdStr, choiceList);
+            } else {
+                this.resetChoices(targetIdStr);
+            }
         }
+        this.updateSidebarState();
     }
 
     checkCondition(val1, operator, val2) {
+        if (val1 === undefined || val1 === null) return false;
+
+        const v1 = String(val1).toLowerCase().trim();
+        const v2 = String(val2).toLowerCase().trim();
+
         switch (operator) {
-            case 'eq': return val1 == val2;
-            case 'neq': return val1 != val2;
-            case 'gt': return parseFloat(val1) > parseFloat(val2);
-            case 'lt': return parseFloat(val1) < parseFloat(val2);
-            case 'contains': return val1 && val1.includes(val2);
+            case 'eq': return v1 == v2;
+            case 'neq': return v1 != v2;
+            case 'gt': return parseFloat(v1) > parseFloat(v2);
+            case 'lt': return parseFloat(v1) < parseFloat(v2);
+            case 'contains': return v1.includes(v2);
             default: return false;
         }
     }
 
     filterChoices(qId, allowedChoiceIds) {
         const wrapper = document.getElementById(`q-wrapper-${qId}`);
+        const allowed = allowedChoiceIds.map(id => Number(id));
+
+        // Filter Radio Buttons
         const radioLabels = wrapper.querySelectorAll('.radio-label');
         radioLabels.forEach(label => {
-            const choiceId = parseInt(label.dataset.choiceId);
-            if (allowedChoiceIds.includes(choiceId)) {
-                label.classList.remove('hidden');
-            } else {
-                label.classList.add('hidden');
-                const input = label.querySelector('input');
-                if (input.checked) input.checked = false;
+            const choiceId = Number(label.dataset.choiceId);
+            const isAllowed = allowed.includes(choiceId);
+            label.style.display = isAllowed ? 'flex' : 'none';
+            label.classList.toggle('hidden', !isAllowed);
+
+            const input = label.querySelector('input');
+            if (!isAllowed && input && input.checked) {
+                input.checked = false;
+                this.updateValue(qId, null);
             }
         });
 
+        // Filter Dropdown Options
         const select = wrapper.querySelector('select');
         if (select) {
             Array.from(select.options).forEach(option => {
                 if (option.value === "") return;
-                const choiceId = parseInt(option.dataset.choiceId);
-                if (allowedChoiceIds.includes(choiceId)) {
-                    option.hidden = false;
-                    option.disabled = false;
-                } else {
-                    option.hidden = true;
-                    option.disabled = true;
-                    if (select.value == option.value) select.value = "";
+                const choiceId = Number(option.dataset.choiceId);
+                const isAllowed = allowed.includes(choiceId);
+
+                option.hidden = !isAllowed;
+                option.disabled = !isAllowed;
+                option.style.display = isAllowed ? 'block' : 'none';
+
+                if (!isAllowed && select.value === option.value) {
+                    select.value = "";
+                    this.updateValue(qId, null);
                 }
             });
         }
@@ -322,21 +382,30 @@ class SurveyRenderer {
     }
 
     updateSidebarState() {
+        if (!this.sections.length) return;
+
         const sidebarTitle = document.querySelector('.sidebar-title');
         if (sidebarTitle) {
             const label = this.language === 'ar' ? 'الأقسام' : 'Sections';
             sidebarTitle.innerHTML = `${label} <span style="float: right; opacity: 0.6;">${this.currentStep + 1} / ${this.sections.length}</span>`;
         }
 
-        this.sections.forEach((_, index) => {
+        this.sections.forEach((section, index) => {
             const sidebarItem = document.getElementById(`sidebar-step-${index}`);
             if (sidebarItem) {
-                sidebarItem.classList.remove('active', 'completed');
-                if (index === this.currentStep) {
-                    sidebarItem.classList.add('active');
-                } else if (index < this.currentStep) {
-                    sidebarItem.classList.add('completed');
-                }
+                sidebarItem.classList.toggle('active', index === this.currentStep);
+
+                // Logic for "completed": Check if all VISIBLE questions have values
+                const isCompleted = section.questions.every(q => {
+                    const wrapper = document.getElementById(`q-wrapper-${q.id}`);
+                    const isHidden = wrapper && (wrapper.style.display === 'none' || wrapper.classList.contains('hidden'));
+                    if (isHidden) return true;
+
+                    const val = this.formValues[q.id];
+                    return val !== undefined && val !== null && val !== '';
+                });
+
+                sidebarItem.classList.toggle('completed', isCompleted);
             }
         });
     }

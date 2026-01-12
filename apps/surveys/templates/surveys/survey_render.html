@@ -460,24 +460,33 @@
         }
 
         .lang-switcher select {
-            background: var(--glass-bg);
+            background: rgba(15, 23, 42, 0.4);
             color: var(--text-main);
             border: 1px solid var(--glass-border);
-            padding: 0.5rem 2rem 0.5rem 1rem;
-            border-radius: 8px;
+            padding: 0.6rem 2.5rem 0.6rem 1.25rem;
+            border-radius: 10px;
             cursor: pointer;
             outline: none;
             font-size: 0.9rem;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338bdf8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 0.5rem center;
+            background-position: right 0.75rem center;
             background-size: 1rem;
+            transition: all 0.3s ease;
+            width: auto;
+            min-width: 140px;
+        }
+
+        .lang-switcher select:hover {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
         }
 
         [dir="rtl"] .lang-switcher select {
-            padding: 0.5rem 1rem 0.5rem 2rem;
-            background-position: left 0.5rem center;
+            padding: 0.6rem 1.25rem 0.6rem 2.5rem;
+            background-position: left 0.75rem center;
         }
 
         .error-msg {
@@ -508,6 +517,7 @@
             color: var(--text-dim);
             text-decoration: none;
             border: 1px solid transparent;
+            cursor: pointer;
         }
 
         .step-item.active {
@@ -572,7 +582,7 @@
                     <form action="{% url 'set_language' %}" method="post" id="lang-form">
                         {% csrf_token %}
                         <input name="next" type="hidden" value="{{ request.get_full_path }}">
-                        <select name="language" onchange="this.form.submit()">
+                        <select name="language" onchange="this.form.submit()" class="lang-select">
                             {% get_available_languages as LANGUAGES %}
                             {% get_language_info_list for LANGUAGES as languages %}
                             {% for language in languages %}
