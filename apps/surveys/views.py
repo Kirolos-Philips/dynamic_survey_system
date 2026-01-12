@@ -1,18 +1,34 @@
 from django.views.generic import TemplateView
-from rest_framework import generics
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.surveys.serializers import SurveyRenderSerializer
 
 from .models import Survey
-from .serializers import SurveyRenderSerializer
 
 
-class SurveyDataAPIView(generics.RetrieveAPIView):
+@extend_schema(
+    summary="Retrieve Survey Data",
+    description="Fetch a survey by its ID. Data is served from cache for high performance.",
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description="The unique ID of the survey",
+        ),
+    ],
+    responses={200: SurveyRenderSerializer},
+)
+class SurveyDataAPIView(APIView):
     """
     API view to return the survey in a flat schema for specialized frontend rendering.
     """
 
-    queryset = Survey.objects.all()
-    serializer_class = SurveyRenderSerializer
-    lookup_field = "id"
+    def get(self, request, *args, **kwargs):
+        return Response(Survey.get_cached_schema(self.kwargs["id"]))
 
 
 class SurveyRenderView(TemplateView):

@@ -103,17 +103,3 @@ class SurveyRenderSerializer(serializers.ModelSerializer):
                 trigger_map[trigger_id].append(logic["target_question_id"])
 
         return trigger_map
-
-    @property
-    def data(self):
-        if not self.instance or isinstance(self.instance, (list, tuple)):
-            return super().data
-
-        cache_key = f"survey_render_{self.instance.id}_{get_language()}"
-        cached_data = cache.get(cache_key)
-        if cached_data is not None:
-            return cached_data
-
-        _data = super().data
-        cache.set(cache_key, _data, 60 * 60 * 24)  # Cache for 24 hours
-        return _data

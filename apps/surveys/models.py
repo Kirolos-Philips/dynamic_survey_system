@@ -1,18 +1,30 @@
 from auditlog.registry import auditlog
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 
 @auditlog.register()
 class Survey(models.Model):
+    class LanguageChoice(models.TextChoices):
+        AR = "ar", _("Arabic")
+        EN = "en", _("English")
+
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"), blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name=_("Created by"),
+    )
+    language = models.CharField(
+        _("Language"),
+        max_length=2,
+        choices=LanguageChoice.choices,
+        default=LanguageChoice.EN,
     )
     is_active = models.BooleanField(_("Is active"), default=True)
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
@@ -24,6 +36,24 @@ class Survey(models.Model):
 
     def __str__(self):
         return self.title
+
+    @classmethod
+    def get_cached_schema(cls, survey_id):
+        cache_key = f"survey_render_{survey_id}"
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+
+        survey = get_object_or_404(Survey, id=survey_id)
+        return survey.update_schema_cache()
+
+    def update_schema_cache(self):
+        from apps.surveys.serializers import SurveyRenderSerializer
+
+        serialized_data = SurveyRenderSerializer(self).data
+        cache_key = f"survey_render_{self.id}"
+        cache.set(cache_key, serialized_data, 60 * 60 * 24 * 7)  # Cache for 7 days
+        return serialized_data
 
 
 @auditlog.register()
