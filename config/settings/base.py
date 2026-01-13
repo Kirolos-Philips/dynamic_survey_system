@@ -41,11 +41,14 @@ INSTALLED_APPS = [
     "knox",
     "drf_spectacular",
     "auditlog",
+    "import_export",
+    "import_export_celery",
     # Local apps
     "apps.users.apps.UsersConfig",
     "apps.surveys.apps.SurveysConfig",
     "apps.submissions.apps.SubmissionsConfig",
     "apps.communications.apps.CommunicationsConfig",
+    "apps.reports.apps.ReportsConfig",
 ]
 
 REST_FRAMEWORK = {

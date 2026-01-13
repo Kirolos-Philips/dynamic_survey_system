@@ -49,6 +49,7 @@ urlpatterns = [
         "api/communications/",
         include("apps.communications.urls", namespace="communications"),
     ),
+    path("api/reports/", include("apps.reports.urls", namespace="reports")),
 ]
 
 urlpatterns += i18n_patterns(
