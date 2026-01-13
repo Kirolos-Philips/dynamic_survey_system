@@ -12,8 +12,8 @@ from .serializers import LoginSerializer
 class LoginAPI(KnoxLoginView):
     permission_classes = (permissions.AllowAny,)
     throttle_classes = KnoxLoginView.throttle_classes + [ActionBasedThrottle]
-    throttle_method_scopes = {
-        "post": "auth",
+    throttle_map = {
+        "post": "5/minute",
     }
 
     @extend_schema(

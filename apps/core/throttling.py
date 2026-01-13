@@ -8,21 +8,32 @@ class ActionBasedThrottle(ScopedRateThrottle):
     """
 
     def allow_request(self, request, view):
-        # 1. Action-based throttling (for ViewSets)
-        if hasattr(view, "action") and view.action:
-            action_scopes = getattr(view, "throttle_action_scopes", {})
-            action_scope = action_scopes.get(view.action)
-            if action_scope:
-                self.scope = action_scope
+        # 1. Get the unified throttle map from the view
+        throttle_map = getattr(view, "throttle_map", {})
 
-        # 2. Method-based throttling (for APIViews or fallback)
-        method_scopes = getattr(view, "throttle_method_scopes", {})
-        method_scope = method_scopes.get(request.method.lower())
-        if method_scope:
-            self.scope = method_scope
+        # 2. Try to find a match:
+        # Priority 1: Current Action (for ViewSets like 'create', 'list')
+        # Priority 2: Current HTTP Method (for APIViews like 'get', 'post')
+        action = getattr(view, "action", None)
+        method = request.method.lower()
 
-        # Re-initialize rate based on the dynamically set scope
-        self.rate = self.get_rate()
+        value = throttle_map.get(action) or throttle_map.get(method)
+
+        if not value:
+            # Fallback to default behavior if no mapping is provided
+            return super().allow_request(request, view)
+
+        # 3. Determine if it's a direct rate string or a pre-configured scope
+        if "/" in value:
+            self.rate = value
+            self.scope = value  # Use rate as scope for unique cache keys
+        else:
+            self.scope = value
+            self.rate = self.get_rate()
+
+        if not self.rate:
+            return True
+
         self.num_requests, self.duration = self.parse_rate(self.rate)
 
         return super().allow_request(request, view)

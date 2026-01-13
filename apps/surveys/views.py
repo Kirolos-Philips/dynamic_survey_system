@@ -34,7 +34,7 @@ class SurveyDataAPIView(APIView):
 
     permission_classes = [IsSurveyManager | IsAnalyst | IsParticipant, SurveyPermission]
     throttle_classes = [ActionBasedThrottle]
-    throttle_method_scopes = {
+    throttle_map = {
         "get": "survey_view",
     }
 

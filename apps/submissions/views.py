@@ -25,8 +25,8 @@ class SubmissionViewSet(
     queryset = Submission.objects.all().prefetch_related("answers")
     serializer_class = SubmissionSerializer
     throttle_classes = [ActionBasedThrottle]
-    throttle_action_scopes = {
-        "create": "submission_create",
+    throttle_map = {
+        "create": "3/minute",
         "update": "submission_update",
         "partial_update": "submission_update",
         "retrieve": "slow_get",
