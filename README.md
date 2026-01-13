@@ -54,7 +54,9 @@ When you are ready to analyze the data:
    ```
 
 3. **Access Links:**
-   - **Admin/Management:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
+   - **Admin Dashboard:** [http://localhost:8000/admin/](http://localhost:8000/admin/)
+   - **Swagger API Docs:** [http://localhost:8000/api/schema/swagger-ui/](http://localhost:8000/api/schema/swagger-ui/)
+   - **Redoc API Docs:** [http://localhost:8000/api/schema/redoc/](http://localhost:8000/api/schema/redoc/)
    - **Email Preview (Mailpit):** [http://localhost:8025/](http://localhost:8025/)
    - **System Monitoring (Flower):** [http://localhost:5555/](http://localhost:5555/)
 
