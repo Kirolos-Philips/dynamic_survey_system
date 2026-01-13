@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Set the Django settings module to production
+export DJANGO_SETTINGS_MODULE=config.settings.production
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+rm -f './celerybeat.pid'
+/entrypoint celery -A config beat -l info

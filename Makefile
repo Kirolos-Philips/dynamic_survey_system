@@ -15,7 +15,7 @@ DJ := $(DOCKER_COMPOSE) exec django
 
 # This magic block allows passing arguments directly to commands
 # It treats everything after the command as a target and silences "nothing to be done"
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),build up down logs migrate makemigrations test shell createsuperuser seed-surveys lint bash))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),build up down restart logs migrate makemigrations test shell createsuperuser seed-surveys lint bash))
   RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(RUN_ARGS):;@:)
 endif

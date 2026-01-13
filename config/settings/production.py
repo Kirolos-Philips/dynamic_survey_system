@@ -6,6 +6,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Load environment variables from the .envs/.production/ directory
 environ.Env.read_env(str(BASE_DIR / ".envs" / ".production" / ".django"))
 environ.Env.read_env(str(BASE_DIR / ".envs" / ".production" / ".postgres"))
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".production" / ".celery"))
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".production" / ".redis"))
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".production" / ".flower"))
 
 from .base import *  # noqa
 from .base import env  # noqa: E402
