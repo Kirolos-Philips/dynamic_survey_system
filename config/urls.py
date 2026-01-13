@@ -45,6 +45,10 @@ urlpatterns = [
     path("api/surveys/", include("apps.surveys.urls", namespace="surveys")),
     path("api/submissions/", include("apps.submissions.urls", namespace="submissions")),
     path("api/users/", include("apps.users.urls", namespace="users")),
+    path(
+        "api/communications/",
+        include("apps.communications.urls", namespace="communications"),
+    ),
 ]
 
 urlpatterns += i18n_patterns(

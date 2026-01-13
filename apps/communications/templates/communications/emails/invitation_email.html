@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation to Survey</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #4b5563;
+        }
+        .content h2 {
+            color: #111827;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        .button-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+        .button {
+            background-color: #4f46e5;
+            color: #ffffff !important;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+            background-color: #f3f4f6;
+        }
+        .survey-info {
+            background-color: #f8fafc;
+            border-left: 4px solid #6366f1;
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dynamic Survey System</h1>
+        </div>
+        <div class="content">
+            <h2>You're invited!</h2>
+            <p>Hello,</p>
+            <p>You have been invited to participate in a new survey. Your feedback is highly valuable to us.</p>
+            
+            <div class="survey-info">
+                <strong>Survey:</strong> {{ survey_title }}<br>
+                {% if survey_description %}
+                <strong>Description:</strong> {{ survey_description }}
+                {% endif %}
+            </div>
+
+            <p>Please click the button below to start the survey. The link is secure and unique to you.</p>
+            
+            <div class="button-container">
+                <a href="{{ action_url }}" class="button">Start Survey</a>
+            </div>
+
+            <p>If the button doesn't work, you can copy and paste the following link into your browser:</p>
+            <p style="word-break: break-all; font-size: 14px; color: #6366f1;">{{ action_url }}</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{ current_year }} Dynamic Survey System. All rights reserved.</p>
+            <p>If you didn't expect this email, you can safely ignore it.</p>
+        </div>
+    </div>
+</body>
+</html>

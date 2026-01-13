@@ -23,6 +23,13 @@ class Submission(models.Model):
         blank=True,
         related_name="survey_responses",
     )
+    invitation = models.OneToOneField(
+        "communications.Invitation",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submission",
+    )
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.IN_PROGRESS
     )
