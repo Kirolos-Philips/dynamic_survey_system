@@ -1,5 +1,6 @@
 from django.contrib.auth import login
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from django.views.generic import TemplateView
+from drf_spectacular.utils import extend_schema
 from knox.views import LoginView as KnoxLoginView
 from rest_framework import permissions
 
@@ -28,3 +29,7 @@ class LoginAPI(KnoxLoginView):
         user = serializer.validated_data
         login(request, user)
         return super(LoginAPI, self).post(request, format=None)
+
+
+class UserLoginPageView(TemplateView):
+    template_name = "users/login.html"
