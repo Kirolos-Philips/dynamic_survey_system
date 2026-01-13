@@ -1,5 +1,5 @@
-from django.core.cache import cache
-from django.utils.translation import get_language
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import Question, QuestionChoice, QuestionLogic, Survey
@@ -42,6 +42,7 @@ class SurveyRenderSerializer(serializers.ModelSerializer):
             "trigger_map",
         ]
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_questions_map(self, obj):
         questions = (
             Question.objects.filter(section__survey=obj)
@@ -52,6 +53,7 @@ class SurveyRenderSerializer(serializers.ModelSerializer):
         data = QuestionRenderSerializer(questions, many=True).data
         return {str(q["id"]): q for q in data}
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_logic_map(self, obj):
         logics = (
             QuestionLogic.objects.filter(trigger_question__section__survey=obj)
@@ -84,6 +86,7 @@ class SurveyRenderSerializer(serializers.ModelSerializer):
 
         return logic_map
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_trigger_map(self, obj):
         logics = (
             QuestionLogic.objects.filter(trigger_question__section__survey=obj)

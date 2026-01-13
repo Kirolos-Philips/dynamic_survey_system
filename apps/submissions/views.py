@@ -4,8 +4,14 @@ from rest_framework.viewsets import GenericViewSet
 
 from apps.submissions.services import SubmissionValidatorService
 from apps.surveys.models import Survey
+from apps.users.permissions import (
+    IsAnalyst,
+    IsParticipant,
+    IsSurveyManager,
+)
 
 from .models import Submission
+from .permissions import SubmissionPermission
 from .serializers import SubmissionSerializer
 
 
@@ -17,6 +23,10 @@ class SubmissionViewSet(
 ):
     queryset = Submission.objects.all().prefetch_related("answers")
     serializer_class = SubmissionSerializer
+    permission_classes = [
+        IsSurveyManager | IsAnalyst | IsParticipant,
+        SubmissionPermission,
+    ]
 
     def _process_answers(self, submission_serializer: SubmissionSerializer):
         submission = submission_serializer.instance

@@ -4,14 +4,18 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.surveys.permissions import SurveyPermission
 from apps.surveys.serializers import SurveyRenderSerializer
+from apps.users.permissions import IsAnalyst, IsParticipant, IsSurveyManager
 
 from .models import Survey
 
 
 @extend_schema(
     summary="Retrieve Survey Data",
-    description="Fetch a survey by its ID. Data is served from cache for high performance.",
+    description=(
+        "Fetch a survey by its ID. Data is served from cache for high performance."
+    ),
     parameters=[
         OpenApiParameter(
             name="id",
@@ -26,6 +30,8 @@ class SurveyDataAPIView(APIView):
     """
     API view to return the survey in a flat schema for specialized frontend rendering.
     """
+
+    permission_classes = [IsSurveyManager | IsAnalyst | IsParticipant, SurveyPermission]
 
     def get(self, request, *args, **kwargs):
         return Response(Survey.get_cached_schema(self.kwargs["id"]))
