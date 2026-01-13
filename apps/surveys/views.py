@@ -53,3 +53,16 @@ class SurveyRenderView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["survey_id"] = self.kwargs.get("id")
         return context
+
+
+class SurveyListView(TemplateView):
+    """
+    Template view to list available surveys.
+    """
+
+    template_name = "surveys/survey_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["surveys"] = Survey.objects.all()
+        return context

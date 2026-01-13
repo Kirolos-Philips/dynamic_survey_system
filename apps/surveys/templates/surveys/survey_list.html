@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surveys | Dynamic Survey System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .survey-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .survey-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            transition: transform 0.3s, border-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .survey-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .survey-card h3 {
+            margin-bottom: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .survey-card p {
+            color: var(--text-dim);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .start-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .start-btn:hover {
+            opacity: 0.9;
+        }
+
+        .no-surveys {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-dim);
+            background: var(--card-bg);
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">Dynamic Survey</div>
+        <button class="logout-btn" id="logout-btn">Logout</button>
+    </nav>
+
+    <div class="container">
+        <h2>Available Surveys</h2>
+
+        {% if surveys %}
+        <div class="survey-grid">
+            {% for survey in surveys %}
+            <div class="survey-card">
+                <div>
+                    <h3>{{ survey.title }}</h3>
+                    <p>{{ survey.description|default:"Explore this survey and share your feedback with us." }}</p>
+                </div>
+                <a href="{% url 'surveys:survey-render' survey.id %}" class="start-btn">Start Survey</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-surveys">
+            <p>No surveys available at the moment.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Check if token exists, if not redirect to login
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '{% url "users:login-page" %}';
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                // Call API logout
+                await fetch('/api/users/auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`
+                    }
+                });
+            } catch (err) {
+                console.error('Logout API failed', err);
+            } finally {
+                // Always clear local storage and redirect
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user');
+                window.location.href = '{% url "users:login-page" %}';
+            }
+        });
+    </script>
+</body>
+</html>

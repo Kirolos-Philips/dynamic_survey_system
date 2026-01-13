@@ -23,6 +23,18 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.role or 'User'})"
 
+    @property
+    def is_survey_manager(self):
+        return self.role == self.Role.SURVEY_MANAGER or self.is_superuser
+
+    @property
+    def is_analyst(self):
+        return self.role == self.Role.ANALYST
+
+    @property
+    def is_participant(self):
+        return self.role == self.Role.PARTICIPANT
+
 
 @auditlog.register()
 class SurveyManager(User):
