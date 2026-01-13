@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "knox",
     "drf_spectacular",
     "auditlog",
+    "import_export",
+    "import_export_celery",
     # Local apps
     "apps.users.apps.UsersConfig",
     "apps.surveys.apps.SurveysConfig",
