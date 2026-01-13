@@ -13,11 +13,14 @@ services:
     env_file:
       - ../.envs/.local/.django
       - ../.envs/.local/.postgres
+      - ../.envs/.local/.celery
+      - ../.envs/.local/.redis
     ports:
       - "8000:8000"
       - "5679:5679"
     command: /start
     depends_on:
+      - redis
       - postgres
 
   postgres:
@@ -30,3 +33,63 @@ services:
       - ../.envs/.local/.postgres
     ports:
       - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_local
+    env_file:
+      - ../.envs/.local/.redis
+
+  celeryworker:
+    build:
+      context: ..
+      dockerfile: ./compose/local/django/Dockerfile
+    container_name: celeryworker_local
+    volumes:
+      - ..:/app:z
+    env_file:
+      - ../.envs/.local/.django
+      - ../.envs/.local/.postgres
+      - ../.envs/.local/.celery
+      - ../.envs/.local/.redis
+    command: /start-celeryworker
+    depends_on:
+      - redis
+      - postgres
+      - django
+
+  flower:
+    build:
+      context: ..
+      dockerfile: ./compose/local/django/Dockerfile
+    container_name: flower_local
+    volumes:
+      - ..:/app:z
+    env_file:
+      - ../.envs/.local/.celery
+      - ../.envs/.local/.flower
+    ports:
+      - "5555:5555"
+    command: /start-flower
+    depends_on:
+      - redis
+      - postgres
+      - django
+
+  celerybeat:
+    build:
+      context: ..
+      dockerfile: ./compose/local/django/Dockerfile
+    container_name: celerybeat_local
+    volumes:
+      - ..:/app:z
+    env_file:
+      - ../.envs/.local/.django
+      - ../.envs/.local/.postgres
+      - ../.envs/.local/.celery
+      - ../.envs/.local/.redis
+    command: /start-celerybeat
+    depends_on:
+      - redis
+      - postgres
+      - django

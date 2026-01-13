@@ -18,6 +18,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Load environment variables from the .envs/.local/ directory
 environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".django"))
 environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".postgres"))
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".celery"))
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".redis"))
+environ.Env.read_env(str(BASE_DIR / ".envs" / ".local" / ".flower"))
 
 from .base import *  # noqa
 from .base import env  # noqa: E402

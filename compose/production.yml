@@ -16,10 +16,13 @@ services:
     env_file:
       - ../.envs/.production/.django
       - ../.envs/.production/.postgres
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.redis
     ports:
       - "8000:8000"
     command: /start
     depends_on:
+      - redis
       - postgres
 
   postgres:
@@ -30,3 +33,63 @@ services:
       - production_postgres_data_backups:/backups:z
     env_file:
       - ../.envs/.production/.postgres
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_production
+    env_file:
+      - ../.envs/.production/.redis
+
+  celeryworker:
+    build:
+      context: ..
+      dockerfile: ./compose/production/django/Dockerfile
+    container_name: celeryworker_production
+    volumes:
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.django
+      - ../.envs/.production/.postgres
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.redis
+    command: /start-celeryworker
+    depends_on:
+      - redis
+      - postgres
+      - django
+
+  flower:
+    build:
+      context: ..
+      dockerfile: ./compose/production/django/Dockerfile
+    container_name: flower_production
+    volumes:
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.flower
+    ports:
+      - "5555:5555"
+    command: /start-flower
+    depends_on:
+      - redis
+      - postgres
+      - django
+
+  celerybeat:
+    build:
+      context: ..
+      dockerfile: ./compose/production/django/Dockerfile
+    container_name: celerybeat_production
+    volumes:
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.django
+      - ../.envs/.production/.postgres
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.redis
+    command: /start-celerybeat
+    depends_on:
+      - redis
+      - postgres
+      - django

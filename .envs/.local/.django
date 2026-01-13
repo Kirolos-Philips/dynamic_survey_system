@@ -1,0 +1,3 @@
+DJANGO_DEBUG=True
+DJANGO_SECRET_KEY=django-insecure-6j!&txba*c+rj82_cbj+-du5^68)_xrl*&v-w048#lp
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
