@@ -94,3 +94,10 @@ services:
       - redis
       - postgres
       - django
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit_local
+    ports:
+      - "8025:8025"
+      - "1025:1025"
