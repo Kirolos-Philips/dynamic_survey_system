@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third party apps
     "rest_framework",
+    "knox",
     "drf_spectacular",
     "auditlog",
     # Local apps
@@ -46,9 +48,21 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "knox.auth.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+REST_KNOX = {
+    "AUTH_TOKEN_CHARACTER_LENGTH": 64,
+    "TOKEN_TTL": timedelta(hours=24),
+    "USER_SERIALIZER": "apps.users.serializers.UserSerializer",
+    "TOKEN_LIMIT_PER_USER": 5,  # 5 login devices maximum
+    "AUTO_REFRESH": True,
+    "MIN_REFRESH_INTERVAL": 3600 * 2,  # to refresh the token expiry every 2 hour
+}
 SPECTACULAR_SETTINGS = {
     "TITLE": "Dynamic Survey System API",
     "DESCRIPTION": "API for managing dynamic surveys and submissions",

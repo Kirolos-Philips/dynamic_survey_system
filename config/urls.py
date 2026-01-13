@@ -44,6 +44,7 @@ urlpatterns = [
     # API apps (no language prefix usually for APIs)
     path("api/surveys/", include("apps.surveys.urls", namespace="surveys")),
     path("api/submissions/", include("apps.submissions.urls", namespace="submissions")),
+    path("api/users/", include("apps.users.urls", namespace="users")),
 ]
 
 urlpatterns += i18n_patterns(
