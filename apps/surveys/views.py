@@ -4,6 +4,7 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.throttling import ActionBasedThrottle
 from apps.surveys.permissions import SurveyPermission
 from apps.surveys.serializers import SurveyRenderSerializer
 from apps.users.permissions import IsAnalyst, IsParticipant, IsSurveyManager
@@ -32,6 +33,10 @@ class SurveyDataAPIView(APIView):
     """
 
     permission_classes = [IsSurveyManager | IsAnalyst | IsParticipant, SurveyPermission]
+    throttle_classes = [ActionBasedThrottle]
+    throttle_method_scopes = {
+        "get": "survey_view",
+    }
 
     def get(self, request, *args, **kwargs):
         return Response(Survey.get_cached_schema(self.kwargs["id"]))
