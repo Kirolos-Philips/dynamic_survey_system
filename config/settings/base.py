@@ -53,6 +53,19 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/day",
+        "user": "1000/day",
+        "auth": "10/minute",
+        "survey_view": "500/hour",
+        "submission_create": "10/minute",
+        "submission_update": "30/minute",
+        "slow_get": "100/hour",
+    },
 }
 
 REST_KNOX = {

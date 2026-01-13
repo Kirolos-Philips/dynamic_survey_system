@@ -3,6 +3,7 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from knox.views import LoginView as KnoxLoginView
 from rest_framework import permissions
 
+from apps.core.throttling import ActionBasedThrottle
 from apps.users.serializers import UserSerializer
 
 from .serializers import LoginSerializer
@@ -10,6 +11,10 @@ from .serializers import LoginSerializer
 
 class LoginAPI(KnoxLoginView):
     permission_classes = (permissions.AllowAny,)
+    throttle_classes = KnoxLoginView.throttle_classes + [ActionBasedThrottle]
+    throttle_map = {
+        "post": "5/minute",
+    }
 
     @extend_schema(
         summary="User Login",
