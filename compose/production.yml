@@ -68,6 +68,8 @@ services:
     env_file:
       - ../.envs/.production/.celery
       - ../.envs/.production/.flower
+      - ../.envs/.production/.postgres
+  
     ports:
       - "5555:5555"
     command: /start-flower
