@@ -1,0 +1,15 @@
+Hello,
+
+You have been invited to participate in a new survey: {{ survey_title }}
+
+{% if survey_description %}
+Description: {{ survey_description }}
+{% endif %}
+
+Please follow this link to participate:
+{{ action_url }}
+
+Your feedback is highly valuable to us.
+
+Best regards,
+Dynamic Survey System

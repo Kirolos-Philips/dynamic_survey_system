@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.users.apps.UsersConfig",
     "apps.surveys.apps.SurveysConfig",
     "apps.submissions.apps.SubmissionsConfig",
+    "apps.communications.apps.CommunicationsConfig",
 ]
 
 REST_FRAMEWORK = {
@@ -179,6 +180,11 @@ STATIC_ROOT = str(BASE_DIR / "staticfiles")
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = str(BASE_DIR / "media")
+DEFAULT_FROM_EMAIL = env(
+    "DJANGO_DEFAULT_FROM_EMAIL", default="Dynamic Survey <noreply@example.com>"
+)
+SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+SITE_URL = env("DJANGO_SITE_URL", default="http://localhost:8000")
 
 # Auth settings
 AUTH_USER_MODEL = "users.User"
