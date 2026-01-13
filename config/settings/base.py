@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.surveys.apps.SurveysConfig",
     "apps.submissions.apps.SubmissionsConfig",
     "apps.communications.apps.CommunicationsConfig",
+    "apps.reports.apps.ReportsConfig",
 ]
 
 REST_FRAMEWORK = {
