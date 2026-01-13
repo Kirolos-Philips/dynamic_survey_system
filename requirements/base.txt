@@ -10,3 +10,4 @@ django-modeltranslation==0.19.10
 django-rest-knox==5.0.2
 celery==5.4.0
 redis==5.2.1
+flower==2.0.1

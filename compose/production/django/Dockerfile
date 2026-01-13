@@ -30,6 +30,10 @@ COPY ./compose/production/django/start-celerybeat /start-celerybeat
 RUN sed -i 's/\r$//g' /start-celerybeat
 RUN chmod +x /start-celerybeat
 
+COPY ./compose/production/django/start-flower /start-flower
+RUN sed -i 's/\r$//g' /start-flower
+RUN chmod +x /start-flower
+
 COPY . /app
 
 ENTRYPOINT ["/entrypoint"]

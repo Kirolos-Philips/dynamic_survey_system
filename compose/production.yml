@@ -52,6 +52,24 @@ services:
       - postgres
       - django
 
+  flower:
+    build:
+      context: ..
+      dockerfile: ./compose/production/django/Dockerfile
+    container_name: flower_production
+    volumes:
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.django
+      - ../.envs/.production/.postgres
+    ports:
+      - "5555:5555"
+    command: /start-flower
+    depends_on:
+      - redis
+      - postgres
+      - django
+
   celerybeat:
     build:
       context: ..
