@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import path
 from django.urls.conf import include
 from drf_spectacular.views import (
@@ -28,6 +29,7 @@ from drf_spectacular.views import (
 app_name = "config"
 
 urlpatterns = [
+    path("health/", lambda request: HttpResponse("v.good.")),  # Health check end point
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

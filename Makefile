@@ -1,4 +1,4 @@
-.PHONY: build up down logs migrate makemigrations shell createsuperuser seed-surveys test lint bash help
+.PHONY: build up down logs migrate makemigrations shell createsuperuser seed-surveys test lint bash help swarm-deploy swarm-down
 
 # Default environment
 ENV ?= local
@@ -15,7 +15,7 @@ DJ := $(DOCKER_COMPOSE) exec django
 
 # This magic block allows passing arguments directly to commands
 # It treats everything after the command as a target and silences "nothing to be done"
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),build up down restart logs migrate makemigrations test shell createsuperuser seed-surveys lint bash))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),build up down restart logs migrate makemigrations test shell createsuperuser seed-surveys lint bash swarm-deploy swarm-down))
   RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(RUN_ARGS):;@:)
 endif
@@ -41,6 +41,8 @@ help:
 	@echo "  lint             Run ruff linter"
 	@echo "  seed-surveys     Populate DB with example surveys"
 	@echo "  bash             Open a bash shell in the django container"
+	@echo "  swarm-deploy     Deploy stack to swarm (requires 'make build ENV=production' first)"
+	@echo "  swarm-down       Remove stack from swarm"
 
 build:
 	$(DOCKER_COMPOSE) build $(RUN_ARGS)
@@ -87,3 +89,9 @@ endif
 
 bash:
 	$(DJ) /bin/bash $(RUN_ARGS)
+
+swarm-deploy:
+	docker stack deploy -c compose/swarm.yml dynamic_survey_system
+
+swarm-down:
+	docker stack rm dynamic_survey_system

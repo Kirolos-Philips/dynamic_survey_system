@@ -1,0 +1,131 @@
+version: '3.8'
+
+volumes:
+  production_postgres_data: {}
+  production_postgres_data_backups: {}
+  production_staticfiles: {}
+  production_mediafiles: {}
+
+networks:
+  swarm_network:
+    driver: overlay
+
+services:
+  django:
+    image: dynamic_survey_system_django:latest
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+    volumes:
+      - production_staticfiles:/app/staticfiles
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.django
+      - ../.envs/.production/.postgres
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.redis
+    ports:
+      - "8000:8000"
+    networks:
+      - swarm_network
+    command: /start
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health/').getcode() == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  postgres:
+    image: postgres:16-alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data:Z
+      - production_postgres_data_backups:/backups:z
+    env_file:
+      - ../.envs/.production/.postgres
+    networks:
+      - swarm_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    env_file:
+      - ../.envs/.production/.redis
+    networks:
+      - swarm_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  celeryworker:
+    image: dynamic_survey_system_django:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.django
+      - ../.envs/.production/.postgres
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.redis
+    networks:
+      - swarm_network
+    command: /start-celeryworker
+
+  flower:
+    image: dynamic_survey_system_django:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.flower
+      - ../.envs/.production/.postgres
+    ports:
+      - "5555:5555"
+    networks:
+      - swarm_network
+    command: /start-flower
+
+  celerybeat:
+    image: dynamic_survey_system_django:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - production_mediafiles:/app/media
+    env_file:
+      - ../.envs/.production/.django
+      - ../.envs/.production/.postgres
+      - ../.envs/.production/.celery
+      - ../.envs/.production/.redis
+    networks:
+      - swarm_network
+    command: /start-celerybeat
