@@ -92,6 +92,41 @@ The `Makefile` provides shortcuts for almost every task in the project. You can 
 | **`make test`** | Run the automated test suite. |
 | **`make lint`** | Run the Ruff linter to check code quality. |
 | **`make bash`** | Open a terminal (bash) inside the Django container. |
+| **`make swarm-deploy`** | Deploy stack to swarm using `compose/swarm.yml`. |
+| **`make swarm-down`** | Remove stack from swarm. |
+
+---
+
+## ☁️ Docker Swarm Deployment
+
+This project includes a production-ready Swarm configuration with scaling, rolling updates, and health checks.
+
+### Setup & Deploy
+1. **Initialize Swarm (First time only):**
+   ```bash
+   docker swarm init
+   ```
+
+2. **Build Production Images:**
+   ```bash
+   make build ENV=production
+   ```
+
+3. **Deploy to Swarm:**
+   ```bash
+   make swarm-deploy
+   ```
+   *This deploys 3 Django replicas, 1 Postgres (pinned to manager), 1 Redis, and Celery workers.*
+
+4. **Verify Deployment:**
+   ```bash
+   docker stack ps dynamic_survey_system
+   ```
+
+5. **Stop & Remove Stack:**
+   ```bash
+   make swarm-down
+   ```
 
 ---
 
