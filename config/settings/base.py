@@ -56,7 +56,7 @@ REST_FRAMEWORK = {
         "knox.auth.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "apps.core.schema.AppGroupingAutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -85,6 +85,16 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API for managing dynamic surveys and submissions",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "TAGS": [
+        {"name": "Users", "description": "User authentication and profile management"},
+        {"name": "Surveys", "description": "Survey structure and metadata"},
+        {
+            "name": "Submissions",
+            "description": "Participant responses and progress tracking",
+        },
+        {"name": "Communications", "description": "Invites and notification services"},
+        {"name": "Reports", "description": "Data export and analytics"},
+    ],
 }
 
 MIDDLEWARE = [
